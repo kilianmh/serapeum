@@ -34,11 +34,12 @@ If there is more than one default clause, signal an error."
         for (keys . body) in cases
         if (or (eql keys t)
                (eql keys 'otherwise))
-          do (if default
-                 (error "More than one default case in ~a" cases)
-                 (if allow-default
-                     (setf default body)
-                     (error "Default disallowed in ~a" cases)))
+          do (cond (default
+                    (error "More than one default case in ~a" cases))
+                   (allow-default
+                    (setf default body))
+                   (t
+                    (error "Default disallowed in ~a" cases)))
         else collect (cons (ensure-list keys) body) into cases-out
         finally (return (values cases-out default))))
 
@@ -419,13 +420,14 @@ Inline keywords are like the keyword arguments to individual cases in
 (defun policy-quality (quality &optional env)
   "Query ENV for optimization declaration information.
 Returns 1 when the environment cannot be accessed."
-  (if (fboundp 'trivial-cltl2:declaration-information)
-      (let ((alist (funcall 'trivial-cltl2:declaration-information 'optimize env)))
-        (or (second (assoc quality alist))
-            (error "Unknown policy quality ~s" quality)))
-      (if (member quality '(speed safety space debug compilation-speed))
-          1
-          (error "Unknown policy quality ~s" quality))))
+  (cond ((fboundp 'trivial-cltl2:declaration-information)
+         (let ((alist (funcall 'trivial-cltl2:declaration-information 'optimize env)))
+           (or (second (assoc quality alist))
+               (error "Unknown policy quality ~s" quality))))
+        ((member quality '(speed safety space debug compilation-speed))
+         1)
+        (t
+         (error "Unknown policy quality ~s" quality))))
 
 (defun policy> (env policy1 policy2)
   (> (policy-quality policy1 env)
