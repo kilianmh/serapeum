@@ -4,7 +4,7 @@
 (deftype octet ()
   '(unsigned-byte 8))
 
-(deftype octet-vector (&optional length)
+(deftype octet-vector (&optional (length '*))
   "An array of octets."
   `(simple-array octet (,length)))
 
